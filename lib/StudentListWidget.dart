@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_json/EditStudentPage.dart';
 import 'package:flutter_json/Students.dart';
+import 'dart:typed_data';
 
 class StudentListWidget extends StatefulWidget {
   @override
@@ -12,6 +13,7 @@ class StudentListWidget extends StatefulWidget {
 class _StudentListWidgetState extends State<StudentListWidget> {
   late Future<List<Student>> _students;
   List<Student> _filteredStudents = [];
+  final GlobalKey<RefreshIndicatorState> _refreshKey = GlobalKey<RefreshIndicatorState>();
 
   @override
   void initState() {
@@ -40,7 +42,7 @@ class _StudentListWidgetState extends State<StudentListWidget> {
 
   List<Student> filterStudentsByBirthYear(List<Student> students, int birthYear) {
     return students.where((student) {
-      DateTime studentBirthdate = DateTime.parse(student.birthdate);
+      DateTime studentBirthdate = DateTime.parse(student.birthdate);//c
       return studentBirthdate.year == birthYear;
     }).toList();
   }
@@ -78,7 +80,7 @@ class _StudentListWidgetState extends State<StudentListWidget> {
           title: Text('Filter by Birth Year'),
           content: TextField(
             keyboardType: TextInputType.number,
-            onChanged: (value) async {
+            onChanged: (value) async {//update the list after the filter
               int birthYear = int.tryParse(value) ?? 0;
               List<Student> students = await _students;
               setState(() {
@@ -124,6 +126,37 @@ class _StudentListWidgetState extends State<StudentListWidget> {
     }
   }
 
+  Widget _buildStudentImage(String? base64Image) {
+    if (base64Image != null && base64Image.isNotEmpty) {
+      List<int> bytes = base64Decode(base64Image);
+
+      // Convert List<int> to Uint8List
+      Uint8List uint8List = Uint8List.fromList(bytes);
+
+      return ClipOval(
+        child: Image.memory(
+          uint8List,
+          height: 50,
+          width: 50,
+          fit: BoxFit.cover,
+        ),
+      );
+    } else {
+      return Container(
+        height: 50,
+        width: 50,
+        decoration: BoxDecoration(
+          color: Colors.grey,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.person,
+          color: Colors.white,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -157,7 +190,7 @@ class _StudentListWidgetState extends State<StudentListWidget> {
                   0: FlexColumnWidth(2),
                   1: FlexColumnWidth(2),
                   2: FlexColumnWidth(2),
-                  3: FlexColumnWidth(2), 
+                  3: FlexColumnWidth(2),
                 },
                 children: [
                   TableRow(
@@ -205,7 +238,12 @@ class _StudentListWidgetState extends State<StudentListWidget> {
             ),
             Expanded(
               child: RefreshIndicator(
-                onRefresh: _refreshStudentList,
+                // Set the key
+                key: _refreshKey,
+                onRefresh: () async {
+                  
+                  await _refreshStudentList();
+                },
                 child: FutureBuilder<List<Student>>(
                   future: _students,
                   builder: (context, snapshot) {
@@ -219,7 +257,8 @@ class _StudentListWidgetState extends State<StudentListWidget> {
                         return Center(child: Text('No students found.'));
                       }
 
-                      List<Student> displayedStudents = _filteredStudents.isNotEmpty ? _filteredStudents : students;
+                      List<Student> displayedStudents =
+                          _filteredStudents.isNotEmpty ? _filteredStudents : students;
 
                       return ListView.builder(
                         itemCount: displayedStudents.length,
@@ -227,7 +266,7 @@ class _StudentListWidgetState extends State<StudentListWidget> {
                           return Card(
                             child: Table(
                               columnWidths: {
-                                0: FlexColumnWidth(2), 
+                                0: FlexColumnWidth(2),
                                 1: FlexColumnWidth(2),
                                 2: FlexColumnWidth(2),
                                 3: FlexColumnWidth(2),
@@ -238,8 +277,14 @@ class _StudentListWidgetState extends State<StudentListWidget> {
                                     TableCell(
                                       child: Padding(
                                         padding: const EdgeInsets.all(8.0),
-                                        child: Text(
-                                          '${displayedStudents[index].firstName} ${displayedStudents[index].lastName}',
+                                        child: Column(
+                                          children: [
+                                            _buildStudentImage(displayedStudents[index].image),
+                                            SizedBox(height: 8),
+                                            Text(
+                                              '${displayedStudents[index].firstName} ${displayedStudents[index].lastName}',
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ),
@@ -269,7 +314,8 @@ class _StudentListWidgetState extends State<StudentListWidget> {
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: displayedStudents[index].courses.map((course) {
-                                            return Text('Course: ${course.courseName}, Grade: ${course.grade}');
+                                            return Text(
+                                                'Course: ${course.courseName}, Grade: ${course.grade}');
                                           }).toList(),
                                         ),
                                       ),

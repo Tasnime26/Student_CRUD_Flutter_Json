@@ -1,7 +1,10 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_json/Students.dart';
+
 class AddStudentPage extends StatefulWidget {
   @override
   _AddStudentPageState createState() => _AddStudentPageState();
@@ -15,6 +18,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
   final TextEditingController addressController = TextEditingController();
   final TextEditingController birthdateController = TextEditingController();
   final List<Course> courses = [];
+  File? _selectedImage;
 
   @override
   Widget build(BuildContext context) {
@@ -81,6 +85,24 @@ class _AddStudentPageState extends State<AddStudentPage> {
                         ))
                     .toList(),
               ),
+              // Image picker button
+              ElevatedButton(
+                onPressed: () {
+                  _pickImage();
+                },
+                child: Text('Pick Image'),
+              ),
+
+              // Display selected image
+              _selectedImage != null
+                  ? Image.file(
+                      _selectedImage!,
+                      height: 100,
+                      width: 100,
+                      fit: BoxFit.cover,
+                    )
+                  : Container(),
+
               ElevatedButton(
                 onPressed: () {
                   addStudent(
@@ -91,6 +113,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
                     addressController.text,
                     birthdateController.text,
                     courses,
+                    _selectedImage,
                   );
                   Navigator.pop(context);
                 },
@@ -102,13 +125,23 @@ class _AddStudentPageState extends State<AddStudentPage> {
       ),
     );
   }
+  // Image picker method
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();//The ImagePicker object (picker) is created from the image_picker package.
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);//open device gallery
+
+    if (pickedFile != null) {
+      setState(() {//update the state of the widget.after adding the image 
+        _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
 
   void _addCourse() {
     setState(() {
       courses.add(Course());
     });
   }
-
 
   void addStudent(
     String firstName,
@@ -118,6 +151,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
     String address,
     String birthdate,
     List<Course> courses,
+    File? image,
   ) async {
     String apiUrl = "http://192.168.56.1:3004/students";
 
@@ -129,6 +163,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
       'address': address,
       'birthdate': birthdate,
       'courses': courses.map((course) => course.toJson()).toList(),
+      'image': image != null ? base64Encode(image.readAsBytesSync()) : null,
     };
 
     String jsonBody = json.encode(studentData);
@@ -154,6 +189,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
     }
   }
 }
+
 
 class Course {
   String courseName = '';

@@ -7,6 +7,7 @@ class Student {
   final String phone;
   final String address;
   final List<Course> courses;
+  final String? image; // Add image property
 
   Student({
     required this.id,
@@ -16,8 +17,9 @@ class Student {
     required this.email,
     required this.phone,
     required this.address,
+    this.image, // Make image an optional parameter
     List<Course>? courses, // Make courses an optional parameter
-  }) : courses = courses ?? []; // i Initialized courses to an empty list if not provided
+  })  : courses = courses ?? [];
 
   factory Student.fromJson(Map<String, dynamic> json) {
     List<dynamic> courseData = json['courses'];
@@ -33,30 +35,12 @@ class Student {
       phone: json['phone'],
       address: json['address'],
       courses: studentCourses,
+      image: json['image'] ?? '', // Assign the 'image' property from JSON to the 'image' property in the class
     );
   }
 }
 
 
-/*class Course {
-  final int courseId;
-  final String courseName;
-  final String grade;
-
-  Course({
-    required this.courseId,
-    required this.courseName,
-    required this.grade,
-  });
-
-  factory Course.fromJson(Map<String, dynamic> json) {
-    return Course(
-      courseId: json['id'],
-      courseName: json['course_name'],
-      grade: json['grade'],
-    );
-  }
-}*/
 class Course {
   final String courseName;
   final String grade;
@@ -80,7 +64,6 @@ class Course {
     );
   }
 }
-
 
 class UniqueIdGenerator {
   static int _lastId = 0;
