@@ -125,13 +125,13 @@ class _AddStudentPageState extends State<AddStudentPage> {
       ),
     );
   }
-  // Image picker method
+ 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();//The ImagePicker object (picker) is created from the image_picker package.
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);//open device gallery
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
-      setState(() {//update the state of the widget.after adding the image 
+      setState(() {
         _selectedImage = File(pickedFile.path);
       });
     }
